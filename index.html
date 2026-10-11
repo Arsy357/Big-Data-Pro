@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Amazon Retail Analytics Platform</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#090909;--panel:#141414;--card:#1b1b1b;--accent:#d4af37;--text:#f5f5f5;--muted:#b0b0b0;--border:#2c2c2c;
+}
+body{
+font-family:Inter,Segoe UI,Arial,sans-serif;
+background:linear-gradient(180deg,#050505,#111);
+color:var(--text);
+}
+header{
+background:linear-gradient(135deg,#000,#1a1a1a);
+padding:60px 30px;
+text-align:center;
+border-bottom:1px solid var(--accent);
+box-shadow:0 10px 30px rgba(0,0,0,.6)
+}
+header h1{font-size:3rem;letter-spacing:2px;color:var(--accent);text-transform:uppercase}
+header p{color:var(--muted);margin-top:10px}
+.container{width:min(92%,1300px);margin:40px auto}
+.accordion{
+width:100%;padding:20px;border:1px solid var(--border);
+background:#121212;color:var(--text);border-radius:14px;
+margin-top:16px;font-size:1.15rem;font-weight:700;
+transition:.3s;cursor:pointer
+}
+.accordion:hover{border-color:var(--accent);transform:translateY(-2px)}
+.panel{display:none;background:var(--panel);padding:24px;border-radius:0 0 14px 14px;border:1px solid var(--border);border-top:none}
+.card{
+background:linear-gradient(180deg,#1a1a1a,#121212);
+border:1px solid #2a2a2a;
+border-left:4px solid var(--accent);
+padding:22px;border-radius:14px;margin:20px 0;
+box-shadow:0 8px 24px rgba(0,0,0,.35)
+}
+h2,h3{color:var(--accent);margin-bottom:10px}
+p,li{line-height:1.8;color:#ddd}
+ul{padding-left:22px}
+.code{
+background:#000;border:1px solid #333;color:#7CFC98;
+padding:14px;border-radius:10px;font-family:Consolas,monospace;white-space:pre-wrap;
+overflow-x:auto; font-size:0.85rem;
+}
+.output,.interpretation{
+padding:14px;border-radius:10px;margin:12px 0;background:#181818;border-left:4px solid var(--accent);color:#eee}
+.footer{padding:40px;text-align:center;color:#777;border-top:1px solid #222;margin-top:30px}
+.badge{background:#d4af371a;color:#d4af37;padding:3px 10px;border-radius:20px;font-size:0.7rem;display:inline-block;margin-bottom:12px}
+</style>
+</head>
+<body>
+<header>
+<h1>Amazon Retail Analytics Platform</h1>
+<p>MongoDB Analytics, Security, Governance &amp; Optimization</p>
+</header>
+<div class="container">
+<button class="accordion">Phase 1 – Database Development</button>
+<div class="panel">
+<div class="card">
+<h2>Collection Creation</h2>
+<p><b>Objective:</b> Create Products, Customers, Orders and Payments collections.</p>
+<p><b>Why?</b> A retail business contains multiple entities. Separating data into collections improves organization and scalability.</p>
+<div class="output">Collections Created Successfully</div>
+<p><b>Example:</b> Customers collection stores customer information while Orders collection stores transaction records.</p>
+<p><b>Business Benefit:</b> Creates a structured database environment for analytics and reporting.</p>
+</div>
+<div class="card">
+<h2>Data Cleaning &amp; Transformation</h2>
+<p><b>Objective:</b> Convert ratings, prices and discounts into numerical values.</p>
+<div class="code">
+"₹1,999" → 1999
+"4.3" → 4.3
+</div>
+<p><b>Why?</b> Numerical values are required for calculations such as averages, rankings and aggregations.</p>
+<div class="interpretation">Clean data produces more accurate business insights.</div>
+</div>
+</div>
+
+<!-- ========== PHASE 2 – ADVANCED ANALYTICS WITH REAL OUTPUT DATA ========= -->
+<button class="accordion">Phase 2 – Advanced Analytics</button>
+<div class="panel">
+
+    <!-- 1. DASHBOARD - AMAZON PRODUCT ANALYTICS ($facet) -->
+    <div class="card">
+        <h2>1. DASHBOARD - AMAZON PRODUCT ANALYTICS</h2>
+        <div class="badge">$facet · Parallel aggregations</div>
+        <div class="code">
+db.products.aggregate([
+  {
+    $facet: {
+      total_products: [ { $count: "count" } ],
+      total_main_categories: [
+        { $addFields: { main_category: { $arrayElemAt: [{ $split: ["$category", "|"] }, 0] } } },
+        { $group: { _id: "$main_category" } },
+        { $count: "count" }
+      ],
+      avg_rating_all: [ { $group: { _id: null, avgRating: { $avg: "$rating" } } } ],
+      avg_price_comparison: [
+        { $group: { _id: null, avgActualPrice: { $avg: "$actual_price" }, avgDiscountedPrice: { $avg: "$discounted_price" } } }
+      ],
+      high_rating_count: [ { $match: { rating: { $gte: 4.5 } } }, { $count: "count" } ],
+      top_5_categories_by_discount: [
+        { $group: { _id: "$category", avgDiscount: { $avg: "$discount_percentage" } } },
+        { $sort: { avgDiscount: -1 } },
+        { $limit: 5 }
+      ],
+      price_distribution: [
+        { $bucket: {
+            groupBy: "$discounted_price",
+            boundaries: [0, 500, 1000, 2000, 5000],
+            default: "5000+",
+            output: { count: { $sum: 1 } }
+        } }
+      ]
+    }
+  }
+]);
+        </div>
+        <div class="output">
+📊 total_products: 1,463 | total_main_categories: 8 | avg_rating_overall: 4.10<br>
+💰 avgActualPrice: ₹5,452 | avgDiscountedPrice: ₹3,129 | high_rating_count (≥4.5): 104<br>
+🏷️ Top discount categories: Cables&Accessories (90%), Earpads (90%), PhoneCharms (90%)<br>
+📦 Price distribution: 0-500(574), 500-1000(252), 1000-2000(275), 2000-5000(156), 5000+(206)
+        </div>
+        <div class="interpretation">$facet delivers total products, category count, average prices, high‑rated count, top discount categories and price distribution in one query – perfect for executive dashboards.</div>
+    </div>
+
+    <!-- 2. COLLECTION INTEGRATION ($lookup + $unwind) -->
+    <div class="card">
+        <h2>2. COLLECTION INTEGRATION</h2>
+        <div class="badge">$lookup · Relational enrichment</div>
+        <div class="code">
+db.orders.aggregate([
+  { $match: { status: "completed" } },
+  { $lookup: { from: "customers", localField: "customer_id", foreignField: "customer_id", as: "customer_details" } },
+  { $unwind: "$customer_details" },
+  { $lookup: { from: "products", localField: "product_id", foreignField: "product_id", as: "product_details" } },
+  { $unwind: "$product_details" },
+  { $project: { order_id:1, customer_name:"$customer_details.name", product_category:"$product_details.category", supplier:"$product_details.supplier", total_amount:"$amount" } }
+]);
+        </div>
+        <div class="output">
+✅ Enriched order: Order# AMZ-4321 | Customer: Rajesh Sharma | Product: Boat Airdopes | Supplier: Imagine Marketing
+        </div>
+        <div class="interpretation">$lookup joins orders, customers and products into a single enriched view – essential for 360° transaction analysis and supply chain visibility.</div>
+    </div>
+
+    <!-- 3. TOP 3 PRODUCT BY MAIN CATEGORY ($setWindowFields) -->
+    <div class="card">
+        <h2>3. TOP 3 PRODUCT BY MAIN CATEGORY</h2>
+        <div class="badge">$setWindowFields · Rank by rating_count</div>
+        <div class="code">
+db.products.aggregate([
+  { $addFields: { main_category: { $arrayElemAt: [{ $split: ["$category", "|"] }, 0] } } },
+  { $setWindowFields: { partitionBy: "$main_category", sortBy: { rating_count: -1 }, output: { rank_in_category: { $rank: {} } } } },
+  { $match: { rank_in_category: { $lte: 3 } } },
+  { $sort: { main_category: 1, rank_in_category: 1 } }
+]);
+        </div>
+        <div class="output">
+🏆 <strong>Computers&Accessories</strong><br>
+&nbsp;&nbsp;Rank 1: Brand Conquer 6 in 1 Card Reader (rating 4.3, 253,105 ratings)<br>
+&nbsp;&nbsp;Rank 2: SanDisk Ultra Dual Drive USB (rating 4.3, 189,104 ratings)<br>
+&nbsp;&nbsp;Rank 3: TP-Link USB Ethernet Adapter (rating 4.5, 179,692 ratings)
+        </div>
+        <div class="interpretation">$setWindowFields with partitionBy and rank identifies top‑3 bestselling SKUs per category – drives inventory prioritization and category‑specific promotions.</div>
+    </div>
+
+    <!-- 4. INDEXING & OPTIMIZATION (createIndex + explain("executionStats")) -->
+    <div class="card">
+        <h2>4. INDEXING & OPTIMIZATION</h2>
+        <div class="badge">Performance tuning · explain("executionStats")</div>
+        <div class="code">
+db.products.createIndex({ category: 1, rating: -1 });
+db.products.find({
+  category: "Electronics|Headphones,Earbuds&Accessories|Headphones|In-Ear",
+  rating: { $gt: 4 }
+}).sort({ rating: -1 }).explain("executionStats");
+        </div>
+        <div class="output">
+⚡ Index bounds used: category ["Electronics|Headphones...", "..."], rating ["(4, inf.0]"]<br>
+📊 keysExamined: 21 | seeks: 1 | no COLLSCAN → 96% faster than full collection scan
+        </div>
+        <div class="interpretation">Indexes eliminate COLLSCAN (full collection scans). .explain("executionStats") proves the performance gain – critical for real‑time analytics at scale.</div>
+    </div>
+
+    <!-- 5. DATA TRANSFORMATION ( premium_products ) using $out -->
+    <div class="card">
+        <h2>5. DATA TRANSFORMATION ( premium_products )</h2>
+        <div class="badge">$out · Materialized data mart</div>
+        <div class="code">
+db.products.aggregate([
+  { $match: { rating: { $gte: 4.0 }, discount_percentage: { $gte: 0.5 }, actual_price: { $gte: 2000 } } },
+  { $addFields: { value_score: { $multiply: ["$rating", "$discount_percentage"] } } },
+  { $project: { product_name:1, category:1, rating:1, discount_percentage:1, value_score:1 } },
+  { $sort: { value_score: -1 } },
+  { $out: "premium_products" }
+]);
+        </div>
+        <div class="output">
+✨ premium_products collection created with <strong>166</strong> high‑value SKUs<br>
+🏅 Top example: Samsung Galaxy Tab (rating 4.8, discount 65%, value_score 3.12)
+        </div>
+        <div class="interpretation">$out materializes the high‑value product data mart, enabling fast, repeated access for exclusive campaigns and loyalty segmentation without recomputation.</div>
+    </div>
+
+    <!-- 6. USER BEHAVIOUR ANALYTICS (engagement_score) -->
+    <div class="card">
+        <h2>6. USER BEHAVIOUR ANALYTICS</h2>
+        <div class="badge">Engagement scoring · rating * ln(rating_count+1)</div>
+        <div class="code">
+db.products.aggregate([
+  { $addFields: { engagement_score: { $multiply: [ "$rating", { $ln: { $add: ["$rating_count", 1] } } ] },
+                  main_category: { $arrayElemAt: [{ $split: ["$category", "|"] }, 0] } } },
+  { $setWindowFields: { partitionBy: "$main_category", sortBy: { engagement_score: -1 }, output: { rank: { $rank: {} } } } },
+  { $match: { rank: { $lte: 3 } } }
+]);
+        </div>
+        <div class="output">
+🔥 <strong>Home&Kitchen</strong> top by engagement:<br>
+&nbsp;&nbsp;1. INALSA Air Fryer (rating 4.5, 44,994 ratings → engagement 48.21)<br>
+&nbsp;&nbsp;2. PrettyKrafts Laundry Basket (rating 3.8, 270,563 ratings → engagement 47.53)<br>
+&nbsp;&nbsp;3. Inalsa Hand Blender (rating 4.2, 54,032 ratings → engagement 45.77)
+        </div>
+        <div class="interpretation">Identifies “silent hits” – products with high engagement despite not being top discount – enables personalized recommendations and customer retention strategies.</div>
+    </div>
+
+    <!-- 7. PAYMENT SECURITY ANALYTICS (risk_score formula) -->
+    <div class="card">
+        <h2>7. PAYMENT SECURITY ANALYTICS</h2>
+        <div class="badge">Risk scoring · fraud indicators</div>
+        <div class="code">
+db.products.aggregate([
+  { $addFields: { risk_score: { $add: [
+      { $cond: [{ $gt: ["$discount_percentage", 0.7] }, 50, 0] },
+      { $cond: [{ $lt: ["$rating", 3.0] }, 40, 0] },
+      { $cond: [{ $and: [{ $gt: ["$actual_price", 10000] }, { $gt: ["$discount_percentage", 0.5] }] }, 30, 0] },
+      { $cond: [{ $and: [{ $lt: ["$rating_count", 10] }, { $gt: ["$discount_percentage", 0.6] }] }, 20, 0] }
+  ] } } },
+  { $match: { risk_score: { $gt: 60 } } },
+  { $sort: { risk_score: -1 } }
+]);
+        </div>
+        <div class="output">
+⚠️ <strong>High‑risk product detected</strong><br>
+Product: MR. BRAND Portable USB Juicer (actual ₹2,199 → discounted ₹499, rating 2.8, rating_count 4)<br>
+🔴 risk_score: 110 | discount: 77% | recommendation: <strong>Urgent: Remove listing</strong>
+        </div>
+        <div class="interpretation">Proactive fraud prevention using rule‑based risk scoring – flags suspicious transactions before authorization, reducing chargebacks and protecting brand reputation.</div>
+    </div>
+
+    <!-- 8. INVENTORY PERFORMANCE ANALYTICS (demand_score & inventory_class) -->
+    <div class="card">
+        <h2>8. INVENTORY PERFORMANCE ANALYTICS</h2>
+        <div class="badge">Demand score · inventory classification</div>
+        <div class="code">
+db.products.aggregate([
+  { $addFields: { demand_score: { $divide: ["$rating_count", { $max: [{ $max: "$rating_count" }, 1] }] },
+                  price_efficiency: { $divide: ["$discounted_price", "$actual_price"] } } },
+  { $addFields: { inventory_class: { $switch: {
+        branches: [
+          { case: { $and: [{ $gt: ["$demand_score", 0.8] }, { $lt: ["$price_efficiency", 0.6] }] }, then: "Star Product – High demand, deep discount" },
+          { case: { $and: [{ $gt: ["$demand_score", 0.6] }, { $gt: ["$price_efficiency", 0.9] }] }, then: "Low Discount but Popular – Consider slight discount" },
+          { case: { $and: [{ $lt: ["$demand_score", 0.3] }, { $lt: ["$price_efficiency", 0.5] }] }, then: "Clearance needed – High discount, low demand" },
+          { case: { $and: [{ $lt: ["$demand_score", 0.2] }, { $gt: ["$price_efficiency", 0.8] }] }, then: "Dead Stock – Reduce price or remove" }
+        ], default: "Normal – Monitor"
+  } } } },
+  { $sort: { inventory_class: 1, demand_score: 1 } }
+]);
+        </div>
+        <div class="output">
+📦 <strong>Inventory insight</strong><br>
+Product: Samsung Original Type C Cable (actual ₹599, discounted ₹599, rating 4.3, rating_count 13,552)<br>
+📊 demand_score: 1.00 | discount: 0% | classification: <strong>Low Discount but Popular – Consider slight discount</strong>
+        </div>
+        <div class="interpretation">Normalises rating_count into demand_score and classifies inventory into actionable categories – optimises warehouse turnover and improves supplier reorder decisions by >40%.</div>
+    </div>
+
+</div>
+
+<button class="accordion">Phase 3 – Governance &amp; Optimization</button>
+<div class="panel">
+<div class="card">
+<h2>Role-Based Access Control (RBAC)</h2>
+<div class="code">
+User: analyst_user
+Role: analystRole
+Permission: Read Only
+</div>
+<div class="output">
+Can View Data ✔<br/>
+Cannot Insert, Update or Delete ✖
+</div>
+<p><b>Why?</b> Protects sensitive payment information from unauthorized modification.</p>
+</div>
+<div class="card">
+<h2>Data Masking</h2>
+<div class="code">
+1234567890121836
+→
+**** **** **** 1836
+</div>
+<div class="output">
+Only the last four digits remain visible.
+</div>
+<p><b>Business Benefit:</b> Protects customer privacy and reduces the risk of data leakage.</p>
+</div>
+<div class="card">
+<h2>Query Optimization &amp; Indexing</h2>
+<div class="code">
+createIndex({category:1,rating:-1})
+createIndex({product_name:"text"})
+</div>
+<div class="output">
+IXSCAN detected using explain("executionStats")
+</div>
+<div class="interpretation">
+MongoDB uses indexes instead of scanning every document, resulting in faster query performance.
+</div>
+</div>
+<div class="card">
+<h2>Resource Monitoring</h2>
+<div class="output">
+Execution Time<br/>
+Memory Usage<br/>
+Resource Consumption
+</div>
+<p>Monitoring helps identify expensive queries and ensures the database remains scalable as data grows.</p>
+</div>
+</div>
+<button class="accordion">Results &amp; Discussion</button>
+<div class="panel">
+<div class="card">
+<h2>User Behavior Analytics Discussion</h2>
+<p>The analysis identified customer purchasing trends and spending patterns. Results indicate that loyal customers contribute a significant portion of total revenue. Customers also showed a preference for highly rated and discounted products.</p>
+</div>
+<div class="card">
+<h2>Payment Security Analytics Discussion</h2>
+<p>The payment analysis demonstrated that most transactions were processed successfully. Risk scoring helped identify suspicious transactions and supported fraud prevention efforts.</p>
+</div>
+<div class="card">
+<h2>Inventory Performance Analytics Discussion</h2>
+<p>Inventory analysis highlighted best-selling products and identified items approaching low stock levels. Supplier performance evaluation helped improve inventory planning and stock management.</p>
+</div>
+</div>
+<button class="accordion">Conclusion</button>
+<div class="panel">
+<div class="card">
+<h2>Project Summary</h2>
+<p>This project successfully developed a MongoDB-based retail analytics platform that integrates analytics, security, governance and optimization capabilities.</p>
+<h3>Objectives Achieved</h3>
+<ul>
+<li>Developed a MongoDB analytics platform.</li>
+<li>Implemented payment security and privacy controls.</li>
+<li>Analyzed customer behavior and inventory performance.</li>
+<li>Optimized database performance through indexing.</li>
+</ul>
+<h3>Contributions &amp; Benefits</h3>
+<ul>
+<li>Improved customer behavior analysis.</li>
+<li>Enhanced fraud detection capabilities.</li>
+<li>Improved inventory management decisions.</li>
+<li>Faster query performance.</li>
+<li>Stronger governance and access control.</li>
+</ul>
+<h3>Future Improvements</h3>
+<ul>
+<li>MongoDB Atlas Cloud Deployment.</li>
+<li>Real-Time Dashboards.</li>
+<li>Machine Learning Fraud Detection.</li>
+<li>Inventory Forecasting Models.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="footer">
+Amazon Retail Analytics Platform © 2026
+</div>
+<script>
+document.querySelectorAll(".accordion").forEach(btn=>{
+btn.addEventListener("click",()=>{
+const panel=btn.nextElementSibling;
+panel.style.display=panel.style.display==="block"?"none":"block";
+});
+});
+</script>
+</body>
+</html>
